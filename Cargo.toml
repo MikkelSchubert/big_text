@@ -1,0 +1,8 @@
+[package]
+name = "big_text"
+version = "0.1.0"
+authors = ["Mikkel Schubert <MikkelSch@gmail.com>"]
+
+[dependencies]
+clap = "2.20.5"
+walkdir = "1.0.7"
