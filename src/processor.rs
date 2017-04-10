@@ -10,15 +10,16 @@ use walkdir::DirEntry;
 use walkdir;
 
 use error::ProcError;
+use criteria::{Consuming, Criteria, Selection, TextFiles};
 
 
 #[derive(Debug)]
 pub enum Checked {
     NotFile,
     TooSmall,
-    BigText(u64, PathBuf),
-    Binary,
-    NewBinaryExt(String),
+    Candidate(u64, PathBuf),
+    Ignored,
+    IgnoredExt(String),
 }
 
 
@@ -26,23 +27,38 @@ pub struct FileProcessor {
     pub min_size: u64,
     pub block_size: u64,
     pub check_limit: usize,
-    pub excluded_exts: HashMap<OsString, usize>,
-}
-
-
-impl Default for FileProcessor {
-    fn default() -> FileProcessor {
-        FileProcessor {
-            min_size: 1024 * 1024 * 1024,
-            block_size: 5 * 1024,
-            check_limit: 20,
-            excluded_exts: HashMap::new(),
-        }
-    }
+    pub ignored_exts: HashMap<OsString, usize>,
+    pub criteria: Box<Criteria>,
 }
 
 
 impl FileProcessor {
+    pub fn new() -> FileProcessor {
+        FileProcessor {
+            min_size: 1024 * 1024 * 1024,
+            block_size: 8 * 1024,
+            check_limit: 20,
+            ignored_exts: HashMap::new(),
+            criteria: Box::new(TextFiles::new()),
+        }
+    }
+
+    pub fn set_min_size(&mut self, size: u64) {
+        self.min_size = size;
+    }
+
+    pub fn set_block_size(&mut self, size: u64) {
+        self.block_size = size
+    }
+
+    pub fn set_check_limit(&mut self, limit: usize) {
+        self.check_limit = limit;
+    }
+
+    pub fn set_criteria(&mut self, criteria: Box<Criteria>) {
+        self.criteria = criteria;
+    }
+
     pub fn process(&mut self, entry: walkdir::Result<DirEntry>) -> Result<Checked, ProcError> {
         let entry = entry
             .map_err(|e| ProcError::new("Error processing file", e))?;
@@ -64,34 +80,38 @@ impl FileProcessor {
         }
 
         if !self.ignore_extension(path) {
-            let is_text =
-                Self::is_text_file(path, self.block_size)
+            let is_candidate =
+                Self::is_candidate_file(&mut self.criteria, path, self.block_size)
                     .map_err(|e| ProcError::new(&format!("Error reading {:?}", path), e))?;
 
-            Ok(self.update_ignored_count(path, &metadata, is_text))
+            Ok(self.update_ignored_count(path, &metadata, is_candidate))
         } else {
-            Ok(Checked::Binary)
+            Ok(Checked::Ignored)
         }
     }
 
     fn ignore_extension(&self, path: &Path) -> bool {
         if let Some(ext) = path.extension() {
-            self.excluded_exts.get(ext.into()).unwrap_or(&0) > &self.check_limit
+            self.ignored_exts.get(ext.into()).unwrap_or(&0) > &self.check_limit
         } else {
             false
         }
     }
 
-    fn update_ignored_count(&mut self, path: &Path, metadata: &Metadata, is_text: bool) -> Checked {
+    fn update_ignored_count(&mut self,
+                            path: &Path,
+                            metadata: &Metadata,
+                            is_candidate: bool)
+                            -> Checked {
         if let Some(ext) = path.extension() {
-            match self.excluded_exts.entry(ext.into()) {
+            match self.ignored_exts.entry(ext.into()) {
                 Entry::Occupied(mut entry) => {
-                    if is_text {
+                    if is_candidate {
                         entry.remove();
                     } else {
                         *entry.get_mut() += 1;
                         if entry.get() > &self.check_limit {
-                            return Checked::NewBinaryExt(ext.to_string_lossy().into());
+                            return Checked::IgnoredExt(ext.to_string_lossy().into());
                         }
                     }
                 }
@@ -101,40 +121,40 @@ impl FileProcessor {
             }
         }
 
-        if is_text {
-            Checked::BigText(metadata.len(), path.into())
+        if is_candidate {
+            Checked::Candidate(metadata.len(), path.into())
         } else {
-            Checked::Binary
+            Checked::Ignored
         }
     }
 
-    fn is_text_file(path: &Path, mut block_size: u64) -> std::io::Result<bool> {
+    fn is_candidate_file(criteria: &mut Box<Criteria>,
+                         path: &Path,
+                         mut remaining: u64)
+                         -> std::io::Result<bool> {
         let handle = File::open(path)?;
         let mut reader = BufReader::new(handle);
 
-        while block_size > 0 {
+        criteria.initialize();
+        while remaining > 0 {
             let consumed = {
                 let buffer = reader.fill_buf()?;
                 if buffer.is_empty() {
                     break;
                 }
 
-                let to_consume = std::cmp::min(block_size, buffer.len() as u64) as usize;
-                if !buffer[..to_consume].iter().cloned().all(Self::is_text) {
-                    return Ok(false);
+                let to_consume = std::cmp::min(remaining, buffer.len() as u64) as usize;
+                if criteria.process(&buffer[..to_consume]) != Consuming::Working {
+                    break;
                 }
 
                 to_consume
             };
 
-            block_size -= consumed as u64;
+            remaining -= consumed as u64;
             reader.consume(consumed);
         }
 
-        Ok(true)
-    }
-
-    fn is_text(byte: u8) -> bool {
-        (byte >= 0x20 && byte <= 0x7e) || (byte >= 0x9 && byte <= 0xd)
+        Ok(criteria.finalize() == Selection::Select)
     }
 }

@@ -3,11 +3,19 @@ use std::io::prelude::*;
 use std;
 
 
+pub enum CriteriaArg {
+    Text,
+    Deflate,
+}
+
+
 pub struct Args {
     pub roots: Vec<String>,
     pub min_size: u64,
     pub block_size: u64,
     pub check_limit: usize,
+    pub compression_ratio: f64,
+    pub criteria: CriteriaArg,
     pub quiet_mode: bool,
     pub human_readable_sizes: bool,
 }
@@ -15,12 +23,27 @@ pub struct Args {
 
 pub fn args() -> Args {
     let args = parse_args();
+    let criteria = match args.value_of("criteria") {
+        Some("text") => CriteriaArg::Text,
+        Some("deflate") => CriteriaArg::Deflate,
+        Some(key) => {
+            stderrln!("ERROR: Unknown value {:?} found for --criteria option.",
+                      key);
+            std::process::exit(1);
+        }
+        None => {
+            stderrln!("ERROR: No value found for --criteria option.");
+            std::process::exit(1);
+        }
+    };
 
     Args {
         roots: parse_strings(&args, "root"),
         min_size: parse_size(&args, "min-size"),
         block_size: parse_size(&args, "block-size"),
         check_limit: value_t_or_exit!(args, "check-limit", usize),
+        compression_ratio: value_t_or_exit!(args, "compression-ratio", f64),
+        criteria: criteria,
         quiet_mode: args.is_present("quiet"),
         human_readable_sizes: args.is_present("human-readable"),
     }
@@ -50,6 +73,7 @@ fn parse_args<'a>() -> ArgMatches<'a> {
         .arg(Arg::with_name("block-size")
                  .long("block-size")
                  .takes_value(true)
+                 // 8k is the default buffer size used by BufReader
                  .default_value("8k")
                  .help("Examine first N bytes of each file to detect text files. \
                         the same united as used by --min-size are allowed"))
@@ -59,6 +83,19 @@ fn parse_args<'a>() -> ArgMatches<'a> {
                  .default_value("10")
                  .help("If > check-limit files with an extension are found to be binary \
                         files, then subsequent files with the same extension are ignored"))
+        .arg(Arg::with_name("compression-ratio")
+                 .long("compression-ratio")
+                 .takes_value(true)
+                 .default_value("0.75")
+                 .help("The highest compression ratio allowed when using the 'deflate' \
+                        criteria; calcuated as new_size / old_size"))
+        .arg(Arg::with_name("criteria")
+                 .long("criteria")
+                 .takes_value(true)
+                 .default_value("text")
+                 .help("The criteria used to detect candidate files; either 'text' \
+                        for text files, or 'deflate' for files compressible using the \
+                        deflate algorithm."))
         .arg(Arg::with_name("root")
                  .multiple(true)
                  .help("Root folder or file."))
