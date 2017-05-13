@@ -75,8 +75,8 @@ fn parse_args<'a>() -> ArgMatches<'a> {
                  .takes_value(true)
                  // 8k is the default buffer size used by BufReader
                  .default_value("8k")
-                 .help("Examine first N bytes of each file to detect text files. \
-                        the same united as used by --min-size are allowed"))
+                 .help("Examine first N bytes of each file to detect text or compressible \
+                        files. The same size units used by --min-size are allowed"))
         .arg(Arg::with_name("check-limit")
                  .long("check-limit")
                  .takes_value(true)
