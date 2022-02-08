@@ -1,13 +1,11 @@
 use clap::{App, Arg, ArgMatches};
-use std::io::prelude::*;
 use std;
-
+use std::io::prelude::*;
 
 pub enum CriteriaArg {
     Text,
     Deflate,
 }
-
 
 pub struct Args {
     pub roots: Vec<String>,
@@ -20,15 +18,16 @@ pub struct Args {
     pub human_readable_sizes: bool,
 }
 
-
 pub fn args() -> Args {
     let args = parse_args();
     let criteria = match args.value_of("criteria") {
         Some("text") => CriteriaArg::Text,
         Some("deflate") => CriteriaArg::Deflate,
         Some(key) => {
-            stderrln!("ERROR: Unknown value {:?} found for --criteria option.",
-                      key);
+            stderrln!(
+                "ERROR: Unknown value {:?} found for --criteria option.",
+                key
+            );
             std::process::exit(1);
         }
         None => {
@@ -49,59 +48,83 @@ pub fn args() -> Args {
     }
 }
 
-
 fn parse_args<'a>() -> ArgMatches<'a> {
     App::new("big_text")
         .version("0.0.1")
         .author("Mikkel Schubert")
-        .arg(Arg::with_name("quiet")
-                 .short("q")
-                 .long("quiet")
-                 .help("Only print errors and big files."))
-        .arg(Arg::with_name("human-readable")
-                 .short("h")
-                 .long("human-readable")
-                 .help("Print sizes in a human readable format."))
-        .arg(Arg::with_name("min-size")
-                 .long("min-size")
-                 .takes_value(true)
-                 .default_value("1G")
-                 .help("Minimum size of files to consider. The size is measured in \
+        .arg(
+            Arg::with_name("quiet")
+                .short("q")
+                .long("quiet")
+                .help("Only print errors and big files."),
+        )
+        .arg(
+            Arg::with_name("human-readable")
+                .short("h")
+                .long("human-readable")
+                .help("Print sizes in a human readable format."),
+        )
+        .arg(
+            Arg::with_name("min-size")
+                .long("min-size")
+                .takes_value(true)
+                .default_value("1G")
+                .help(
+                    "Minimum size of files to consider. The size is measured in \
                         bytes by default. The units 'b', 'k', 'M', 'G', 'T', and 'P', \
                         may be used to specify units of bytes, kilobytes, megabytes, \
-                        gigabytes, terabytes, and petabytes"))
-        .arg(Arg::with_name("block-size")
-                 .long("block-size")
-                 .takes_value(true)
-                 // 8k is the default buffer size used by BufReader
-                 .default_value("8k")
-                 .help("Examine first N bytes of each file to detect text or compressible \
-                        files. The same size units used by --min-size are allowed"))
-        .arg(Arg::with_name("check-limit")
-                 .long("check-limit")
-                 .takes_value(true)
-                 .default_value("10")
-                 .help("If > check-limit files with an extension are found to be binary \
-                        files, then subsequent files with the same extension are ignored"))
-        .arg(Arg::with_name("compression-ratio")
-                 .long("compression-ratio")
-                 .takes_value(true)
-                 .default_value("0.75")
-                 .help("The highest compression ratio allowed when using the 'deflate' \
-                        criteria; calcuated as new_size / old_size"))
-        .arg(Arg::with_name("criteria")
-                 .long("criteria")
-                 .takes_value(true)
-                 .default_value("text")
-                 .help("The criteria used to detect candidate files; either 'text' \
+                        gigabytes, terabytes, and petabytes",
+                ),
+        )
+        .arg(
+            Arg::with_name("block-size")
+                .long("block-size")
+                .takes_value(true)
+                // 8k is the default buffer size used by BufReader
+                .default_value("8k")
+                .help(
+                    "Examine first N bytes of each file to detect text or compressible \
+                        files. The same size units used by --min-size are allowed",
+                ),
+        )
+        .arg(
+            Arg::with_name("check-limit")
+                .long("check-limit")
+                .takes_value(true)
+                .default_value("10")
+                .help(
+                    "If > check-limit files with an extension are found to be binary \
+                        files, then subsequent files with the same extension are ignored",
+                ),
+        )
+        .arg(
+            Arg::with_name("compression-ratio")
+                .long("compression-ratio")
+                .takes_value(true)
+                .default_value("0.75")
+                .help(
+                    "The highest compression ratio allowed when using the 'deflate' \
+                        criteria; calcuated as new_size / old_size",
+                ),
+        )
+        .arg(
+            Arg::with_name("criteria")
+                .long("criteria")
+                .takes_value(true)
+                .default_value("text")
+                .help(
+                    "The criteria used to detect candidate files; either 'text' \
                         for text files, or 'deflate' for files compressible using the \
-                        deflate algorithm."))
-        .arg(Arg::with_name("root")
-                 .multiple(true)
-                 .help("Root folder or file."))
+                        deflate algorithm.",
+                ),
+        )
+        .arg(
+            Arg::with_name("root")
+                .multiple(true)
+                .help("Root folder or file."),
+        )
         .get_matches()
 }
-
 
 fn parse_size(args: &ArgMatches, key: &str) -> u64 {
     let size = value_t_or_exit!(args, key, String);
@@ -119,9 +142,11 @@ fn parse_size(args: &ArgMatches, key: &str) -> u64 {
     let size = match u64::from_str_radix(size, 10) {
         Ok(value) => value,
         Err(err) => {
-            stderrln!("ERROR: Invalid numerical passed to --min-size ({:?}): {}",
-                      size,
-                      err);
+            stderrln!(
+                "ERROR: Invalid numerical passed to --min-size ({:?}): {}",
+                size,
+                err
+            );
             std::process::exit(1);
         }
     };
@@ -146,7 +171,6 @@ fn parse_size(args: &ArgMatches, key: &str) -> u64 {
         std::process::exit(1);
     }
 }
-
 
 fn parse_strings(args: &ArgMatches, key: &str) -> Vec<String> {
     if let Some(values) = args.values_of(key) {

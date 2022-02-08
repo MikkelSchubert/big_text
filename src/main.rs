@@ -10,13 +10,12 @@ use walkdir::WalkDir;
 mod stderr;
 
 mod args;
+mod criteria;
 mod error;
 mod processor;
-mod criteria;
 
-use processor::{Checked, FileProcessor};
 use criteria::{Criteria, DeflatableFiles, TextFiles};
-
+use processor::{Checked, FileProcessor};
 
 fn human_readable_size(n_bytes: u64) -> String {
     let (div, desc) = match n_bytes {
@@ -30,11 +29,9 @@ fn human_readable_size(n_bytes: u64) -> String {
     format!("{:.1}{}", n_bytes as f64 / div as f64, desc)
 }
 
-
 fn machine_readable_size(n_bytes: u64) -> String {
     format!("{}", n_bytes)
 }
-
 
 fn create_processor(args: &args::Args) -> processor::FileProcessor {
     let mut processor = FileProcessor::new();
@@ -52,7 +49,6 @@ fn create_processor(args: &args::Args) -> processor::FileProcessor {
     processor.set_criteria(criteria);
     processor
 }
-
 
 fn main() {
     let args = args::args();

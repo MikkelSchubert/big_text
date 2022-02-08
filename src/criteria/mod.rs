@@ -1,10 +1,8 @@
-
-mod text;
 mod deflate;
+mod text;
 
-pub use self::text::TextFiles;
 pub use self::deflate::DeflatableFiles;
-
+pub use self::text::TextFiles;
 
 #[derive(PartialEq)]
 pub enum Consuming {
@@ -14,7 +12,6 @@ pub enum Consuming {
     Done,
 }
 
-
 #[derive(PartialEq)]
 pub enum Selection {
     /// The file fits the selection criteria for the criteria
@@ -22,7 +19,6 @@ pub enum Selection {
     /// The file does not fit the selection criteria for the criteria
     Ignore,
 }
-
 
 pub trait Criteria {
     /// Initialize the criteria, resetting any previous state

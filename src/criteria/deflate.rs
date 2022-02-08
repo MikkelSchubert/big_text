@@ -1,14 +1,12 @@
 use flate2::{Compress, Compression, Flush, Status};
 
-use criteria::{Criteria, Consuming, Selection};
-
+use criteria::{Consuming, Criteria, Selection};
 
 pub struct DeflatableFiles {
     deflate: Compress,
     buffer: Vec<u8>,
     ratio: f64,
 }
-
 
 impl DeflatableFiles {
     pub fn new(ratio: f64) -> DeflatableFiles {
@@ -20,7 +18,6 @@ impl DeflatableFiles {
     }
 }
 
-
 impl Criteria for DeflatableFiles {
     fn initialize(&mut self) {
         self.deflate.reset();
@@ -31,10 +28,11 @@ impl Criteria for DeflatableFiles {
         let mut in_processed = 0;
 
         while in_processed < data.len() as u64 {
-            self.deflate
-                .compress(&data[in_processed as usize..],
-                          &mut self.buffer,
-                          Flush::None);
+            self.deflate.compress(
+                &data[in_processed as usize..],
+                &mut self.buffer,
+                Flush::None,
+            );
             in_processed = self.deflate.total_in() - in_before;
         }
 
@@ -43,8 +41,7 @@ impl Criteria for DeflatableFiles {
 
     fn finalize(&mut self) -> Selection {
         loop {
-            match self.deflate
-                      .compress(&[], &mut self.buffer, Flush::Finish) {
+            match self.deflate.compress(&[], &mut self.buffer, Flush::Finish) {
                 Status::StreamEnd => break,
                 _ => continue,
             }

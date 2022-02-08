@@ -1,17 +1,16 @@
+use std;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::ffi::OsString;
 use std::fs::{File, Metadata};
-use std::io::BufReader;
 use std::io::prelude::*;
+use std::io::BufReader;
 use std::path::{Path, PathBuf};
-use std;
-use walkdir::DirEntry;
 use walkdir;
+use walkdir::DirEntry;
 
-use error::ProcError;
 use criteria::{Consuming, Criteria, Selection, TextFiles};
-
+use error::ProcError;
 
 #[derive(Debug)]
 pub enum Checked {
@@ -22,7 +21,6 @@ pub enum Checked {
     IgnoredExt(String),
 }
 
-
 pub struct FileProcessor {
     pub min_size: u64,
     pub block_size: u64,
@@ -30,7 +28,6 @@ pub struct FileProcessor {
     pub ignored_exts: HashMap<OsString, usize>,
     pub criteria: Box<Criteria>,
 }
-
 
 impl FileProcessor {
     pub fn new() -> FileProcessor {
@@ -60,20 +57,17 @@ impl FileProcessor {
     }
 
     pub fn process(&mut self, entry: walkdir::Result<DirEntry>) -> Result<Checked, ProcError> {
-        let entry = entry
-            .map_err(|e| ProcError::new("Error processing file", e))?;
+        let entry = entry.map_err(|e| ProcError::new("Error processing file", e))?;
         let file_type = entry.file_type();
         if file_type.is_symlink() || file_type.is_dir() {
             return Ok(Checked::NotFile);
         }
 
         let path = entry.path();
-        let metadata = entry
-            .metadata()
-            .map_err(|e| {
-                         let msg = format!("Error retrieving metadata for {:?}", path);
-                         ProcError::new(&msg, e)
-                     })?;
+        let metadata = entry.metadata().map_err(|e| {
+            let msg = format!("Error retrieving metadata for {:?}", path);
+            ProcError::new(&msg, e)
+        })?;
 
         if metadata.len() < self.min_size {
             return Ok(Checked::TooSmall);
@@ -98,11 +92,12 @@ impl FileProcessor {
         }
     }
 
-    fn update_ignored_count(&mut self,
-                            path: &Path,
-                            metadata: &Metadata,
-                            is_candidate: bool)
-                            -> Checked {
+    fn update_ignored_count(
+        &mut self,
+        path: &Path,
+        metadata: &Metadata,
+        is_candidate: bool,
+    ) -> Checked {
         if let Some(ext) = path.extension() {
             match self.ignored_exts.entry(ext.into()) {
                 Entry::Occupied(mut entry) => {
@@ -128,10 +123,11 @@ impl FileProcessor {
         }
     }
 
-    fn is_candidate_file(criteria: &mut Box<Criteria>,
-                         path: &Path,
-                         mut remaining: u64)
-                         -> std::io::Result<bool> {
+    fn is_candidate_file(
+        criteria: &mut Box<Criteria>,
+        path: &Path,
+        mut remaining: u64,
+    ) -> std::io::Result<bool> {
         let handle = File::open(path)?;
         let mut reader = BufReader::new(handle);
 
