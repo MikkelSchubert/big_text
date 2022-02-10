@@ -1,3 +1,4 @@
+use anyhow::{Context, Result};
 use clap::{App, Arg, ArgMatches};
 
 pub enum CriteriaArg {
@@ -16,54 +17,44 @@ pub struct Args {
     pub human_readable_sizes: bool,
 }
 
-pub fn args() -> Args {
+pub fn args() -> Result<Args> {
     let args = parse_args();
     let criteria = match args.value_of("criteria") {
         Some("text") => CriteriaArg::Text,
         Some("deflate") => CriteriaArg::Deflate,
-        Some(key) => {
-            eprintln!(
-                "ERROR: Unknown value {:?} found for --criteria option.",
-                key
-            );
-            std::process::exit(1);
-        }
-        None => {
-            eprintln!("ERROR: No value found for --criteria option.");
-            std::process::exit(1);
-        }
+        _ => unreachable!(),
     };
 
-    Args {
-        roots: parse_strings(&args, "root"),
-        min_size: parse_size(&args, "min-size"),
-        block_size: parse_size(&args, "block-size"),
-        check_limit: value_t_or_exit!(args, "check-limit", usize),
-        compression_ratio: value_t_or_exit!(args, "compression-ratio", f64),
+    Ok(Args {
+        roots: args.values_of_t("root")?,
+        min_size: parse_size(&args, "min-size")?,
+        block_size: parse_size(&args, "block-size")?,
+        check_limit: args.value_of_t("check-limit")?,
+        compression_ratio: args.value_of_t("compression-ratio")?,
         criteria,
         quiet_mode: args.is_present("quiet"),
         human_readable_sizes: args.is_present("human-readable"),
-    }
+    })
 }
 
-fn parse_args<'a>() -> ArgMatches<'a> {
+fn parse_args() -> ArgMatches {
     App::new("big_text")
         .version("0.0.1")
         .author("Mikkel Schubert")
         .arg(
-            Arg::with_name("quiet")
-                .short("q")
+            Arg::new("quiet")
+                .short('q')
                 .long("quiet")
                 .help("Only print errors and big files."),
         )
         .arg(
-            Arg::with_name("human-readable")
-                .short("h")
+            Arg::new("human-readable")
+                .short('h')
                 .long("human-readable")
                 .help("Print sizes in a human readable format."),
         )
         .arg(
-            Arg::with_name("min-size")
+            Arg::new("min-size")
                 .long("min-size")
                 .takes_value(true)
                 .default_value("1G")
@@ -75,7 +66,7 @@ fn parse_args<'a>() -> ArgMatches<'a> {
                 ),
         )
         .arg(
-            Arg::with_name("block-size")
+            Arg::new("block-size")
                 .long("block-size")
                 .takes_value(true)
                 // 8k is the default buffer size used by BufReader
@@ -86,7 +77,7 @@ fn parse_args<'a>() -> ArgMatches<'a> {
                 ),
         )
         .arg(
-            Arg::with_name("check-limit")
+            Arg::new("check-limit")
                 .long("check-limit")
                 .takes_value(true)
                 .default_value("10")
@@ -96,7 +87,7 @@ fn parse_args<'a>() -> ArgMatches<'a> {
                 ),
         )
         .arg(
-            Arg::with_name("compression-ratio")
+            Arg::new("compression-ratio")
                 .long("compression-ratio")
                 .takes_value(true)
                 .default_value("0.75")
@@ -106,9 +97,10 @@ fn parse_args<'a>() -> ArgMatches<'a> {
                 ),
         )
         .arg(
-            Arg::with_name("criteria")
+            Arg::new("criteria")
                 .long("criteria")
                 .takes_value(true)
+                .possible_values(["text", "deflate"])
                 .default_value("text")
                 .help(
                     "The criteria used to detect candidate files; either 'text' \
@@ -117,36 +109,25 @@ fn parse_args<'a>() -> ArgMatches<'a> {
                 ),
         )
         .arg(
-            Arg::with_name("root")
-                .multiple(true)
+            Arg::new("root")
+                .default_value(".")
+                .multiple_values(true)
                 .help("Root folder or file."),
         )
         .get_matches()
 }
 
-fn parse_size(args: &ArgMatches, key: &str) -> u64 {
-    let size = value_t_or_exit!(args, key, String);
+fn parse_size(args: &ArgMatches, key: &str) -> Result<u64> {
+    let size: String = args.value_of_t(key)?;
     let (size, unit) = if let Some(index) = size.find(|c| !char::is_digit(c, 10)) {
         size.split_at(index)
     } else {
         (size.as_str(), "b")
     };
 
-    if size.is_empty() {
-        eprintln!("ERROR: No numerical value to --min-size.");
-        std::process::exit(1);
-    }
-
-    let size = match size.parse::<u64>() {
-        Ok(value) => value,
-        Err(err) => {
-            eprintln!(
-                "ERROR: Invalid numerical passed to --min-size ({:?}): {}",
-                size, err
-            );
-            std::process::exit(1);
-        }
-    };
+    let size = size
+        .parse::<u64>()
+        .context("invalid numerical passed to --min-size")?;
 
     let unit = match unit {
         "b" | "B" => 1,
@@ -161,18 +142,6 @@ fn parse_size(args: &ArgMatches, key: &str) -> u64 {
         }
     };
 
-    if let Some(value) = size.checked_mul(unit) {
-        value
-    } else {
-        eprintln!("ERROR: Value passed to --min-size in bytes cannot fit in 64 bit.");
-        std::process::exit(1);
-    }
-}
-
-fn parse_strings(args: &ArgMatches, key: &str) -> Vec<String> {
-    if let Some(values) = args.values_of(key) {
-        values.map(|v| v.into()).collect()
-    } else {
-        vec![".".into()]
-    }
+    size.checked_mul(unit)
+        .context("--min-size in bytes cannot fit in 64 bit")
 }

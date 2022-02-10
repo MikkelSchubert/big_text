@@ -1,4 +1,3 @@
-#[macro_use(value_t_or_exit)]
 extern crate clap;
 extern crate flate2;
 extern crate walkdir;
@@ -57,8 +56,8 @@ fn create_processor(args: &args::Args) -> processor::FileProcessor {
     processor
 }
 
-fn main() {
-    let args = args::args();
+fn main() -> Result<(), anyhow::Error> {
+    let args = args::args()?;
     let mut processor = create_processor(&args);
 
     let mut errors = 0;
@@ -112,4 +111,6 @@ fn main() {
         eprintln!(" - Total size = {}", format_size(total_size));
         eprintln!("Errors encountered = {}", errors);
     }
+
+    Ok(())
 }
