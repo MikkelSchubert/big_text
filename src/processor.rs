@@ -1,4 +1,3 @@
-use std;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::ffi::OsString;
@@ -6,7 +5,6 @@ use std::fs::{File, Metadata};
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
-use walkdir;
 use walkdir::DirEntry;
 
 use anyhow::{Context, Result};
@@ -85,7 +83,7 @@ impl FileProcessor {
 
     fn ignore_extension(&self, path: &Path) -> bool {
         if let Some(ext) = path.extension() {
-            self.ignored_exts.get(ext.into()).unwrap_or(&0) > &self.check_limit
+            self.ignored_exts.get(ext).unwrap_or(&0) > &self.check_limit
         } else {
             false
         }

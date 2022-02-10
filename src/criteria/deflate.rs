@@ -13,7 +13,7 @@ impl DeflatableFiles {
         DeflatableFiles {
             deflate: Compress::new(Compression::Default, false),
             buffer: vec![0u8; 8 * 1024],
-            ratio: ratio,
+            ratio,
         }
     }
 }

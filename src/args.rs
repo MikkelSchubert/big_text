@@ -1,5 +1,4 @@
 use clap::{App, Arg, ArgMatches};
-use std;
 
 pub enum CriteriaArg {
     Text,
@@ -41,7 +40,7 @@ pub fn args() -> Args {
         block_size: parse_size(&args, "block-size"),
         check_limit: value_t_or_exit!(args, "check-limit", usize),
         compression_ratio: value_t_or_exit!(args, "compression-ratio", f64),
-        criteria: criteria,
+        criteria,
         quiet_mode: args.is_present("quiet"),
         human_readable_sizes: args.is_present("human-readable"),
     }
@@ -138,7 +137,7 @@ fn parse_size(args: &ArgMatches, key: &str) -> u64 {
         std::process::exit(1);
     }
 
-    let size = match u64::from_str_radix(size, 10) {
+    let size = match size.parse::<u64>() {
         Ok(value) => value,
         Err(err) => {
             eprintln!(

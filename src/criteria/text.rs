@@ -34,5 +34,5 @@ impl Criteria for TextFiles {
 }
 
 fn is_text(byte: u8) -> bool {
-    (byte >= 0x20 && byte <= 0x7e) || (byte >= 0x9 && byte <= 0xd)
+    (0x20..=0x7e).contains(&byte) || (0x9..=0xd).contains(&byte)
 }
