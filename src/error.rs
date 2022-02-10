@@ -54,7 +54,7 @@ impl Error for ProcError {
         &self.message
     }
 
-    fn cause(&self) -> Option<&Error> {
+    fn cause(&self) -> Option<&dyn Error> {
         match self.cause {
             ProcErrorCause::Other => None,
             ProcErrorCause::IoError(ref error) => Some(error),

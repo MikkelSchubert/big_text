@@ -1,6 +1,6 @@
 use flate2::{Compress, Compression, Flush, Status};
 
-use criteria::{Consuming, Criteria, Selection};
+use crate::criteria::{Consuming, Criteria, Selection};
 
 pub struct DeflatableFiles {
     deflate: Compress,

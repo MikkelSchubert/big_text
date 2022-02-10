@@ -19,10 +19,10 @@ use processor::{Checked, FileProcessor};
 
 fn human_readable_size(n_bytes: u64) -> String {
     let (div, desc) = match n_bytes {
-        0...1023 => return format!("{}", n_bytes),
-        1024...1048575 => (2u64.pow(10), " KB"),
-        1048576...1073741823 => (2u64.pow(20), " MB"),
-        1073741824...1099511627775 => (2u64.pow(30), " GB"),
+        0..=1023 => return format!("{}", n_bytes),
+        1024..=1048575 => (2u64.pow(10), " KB"),
+        1048576..=1073741823 => (2u64.pow(20), " MB"),
+        1073741824..=1099511627775 => (2u64.pow(30), " GB"),
         _ => (2u64.pow(40), " TB"),
     };
 
@@ -40,9 +40,9 @@ fn create_processor(args: &args::Args) -> processor::FileProcessor {
     processor.set_check_limit(args.check_limit);
 
     let criteria = match args.criteria {
-        args::CriteriaArg::Text => Box::new(TextFiles::new()) as Box<Criteria>,
+        args::CriteriaArg::Text => Box::new(TextFiles::new()) as Box<dyn Criteria>,
         args::CriteriaArg::Deflate => {
-            Box::new(DeflatableFiles::new(args.compression_ratio)) as Box<Criteria>
+            Box::new(DeflatableFiles::new(args.compression_ratio)) as Box<dyn Criteria>
         }
     };
 

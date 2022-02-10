@@ -9,8 +9,8 @@ use std::path::{Path, PathBuf};
 use walkdir;
 use walkdir::DirEntry;
 
-use criteria::{Consuming, Criteria, Selection, TextFiles};
-use error::ProcError;
+use crate::criteria::{Consuming, Criteria, Selection, TextFiles};
+use crate::error::ProcError;
 
 #[derive(Debug)]
 pub enum Checked {
@@ -26,7 +26,7 @@ pub struct FileProcessor {
     pub block_size: u64,
     pub check_limit: usize,
     pub ignored_exts: HashMap<OsString, usize>,
-    pub criteria: Box<Criteria>,
+    pub criteria: Box<dyn Criteria>,
 }
 
 impl FileProcessor {
@@ -52,7 +52,7 @@ impl FileProcessor {
         self.check_limit = limit;
     }
 
-    pub fn set_criteria(&mut self, criteria: Box<Criteria>) {
+    pub fn set_criteria(&mut self, criteria: Box<dyn Criteria>) {
         self.criteria = criteria;
     }
 
@@ -124,7 +124,7 @@ impl FileProcessor {
     }
 
     fn is_candidate_file(
-        criteria: &mut Box<Criteria>,
+        criteria: &mut Box<dyn Criteria>,
         path: &Path,
         mut remaining: u64,
     ) -> std::io::Result<bool> {

@@ -1,4 +1,4 @@
-use criteria::{Consuming, Criteria, Selection};
+use crate::criteria::{Consuming, Criteria, Selection};
 
 pub struct TextFiles {
     is_text: bool,
