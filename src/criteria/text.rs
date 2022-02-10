@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 use crate::criteria::{Consuming, Criteria, Selection};
 
 pub struct TextFiles {
@@ -15,20 +17,20 @@ impl Criteria for TextFiles {
         self.is_text = true;
     }
 
-    fn process(&mut self, data: &[u8]) -> Consuming {
+    fn process(&mut self, data: &[u8]) -> Result<Consuming> {
         self.is_text &= data.iter().cloned().all(is_text);
         if self.is_text {
-            Consuming::Working
+            Ok(Consuming::Working)
         } else {
-            Consuming::Done
+            Ok(Consuming::Done)
         }
     }
 
-    fn finalize(&mut self) -> Selection {
+    fn finalize(&mut self) -> Result<Selection> {
         if self.is_text {
-            Selection::Select
+            Ok(Selection::Select)
         } else {
-            Selection::Ignore
+            Ok(Selection::Ignore)
         }
     }
 }

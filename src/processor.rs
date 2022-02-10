@@ -139,7 +139,7 @@ impl FileProcessor {
                 }
 
                 let to_consume = std::cmp::min(remaining, buffer.len() as u64) as usize;
-                if criteria.process(&buffer[..to_consume]) != Consuming::Working {
+                if criteria.process(&buffer[..to_consume])? != Consuming::Working {
                     break;
                 }
 
@@ -150,6 +150,6 @@ impl FileProcessor {
             reader.consume(consumed);
         }
 
-        Ok(criteria.finalize() == Selection::Select)
+        criteria.finalize().map(|v| v == Selection::Select)
     }
 }

@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 mod deflate;
 mod text;
 
@@ -25,8 +27,8 @@ pub trait Criteria {
     fn initialize(&mut self);
 
     /// Process block of data and return value signifying if more data is useful
-    fn process(&mut self, data: &[u8]) -> Consuming;
+    fn process(&mut self, data: &[u8]) -> Result<Consuming>;
 
     /// Returns the final determination
-    fn finalize(&mut self) -> Selection;
+    fn finalize(&mut self) -> Result<Selection>;
 }
