@@ -5,6 +5,7 @@ authors = ["Mikkel Schubert <MikkelSch@gmail.com>"]
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.53"
 clap = "2.20.5"
 flate2 = "0.2.17"
 walkdir = "1.0.7"

@@ -9,8 +9,9 @@ use std::path::{Path, PathBuf};
 use walkdir;
 use walkdir::DirEntry;
 
+use anyhow::{Context, Result};
+
 use crate::criteria::{Consuming, Criteria, Selection, TextFiles};
-use crate::error::ProcError;
 
 #[derive(Debug)]
 pub enum Checked {
@@ -56,27 +57,25 @@ impl FileProcessor {
         self.criteria = criteria;
     }
 
-    pub fn process(&mut self, entry: walkdir::Result<DirEntry>) -> Result<Checked, ProcError> {
-        let entry = entry.map_err(|e| ProcError::new("Error processing file", e))?;
+    pub fn process(&mut self, entry: walkdir::Result<DirEntry>) -> Result<Checked> {
+        let entry = entry.context("error processing file")?;
         let file_type = entry.file_type();
         if file_type.is_symlink() || file_type.is_dir() {
             return Ok(Checked::NotFile);
         }
 
         let path = entry.path();
-        let metadata = entry.metadata().map_err(|e| {
-            let msg = format!("Error retrieving metadata for {:?}", path);
-            ProcError::new(&msg, e)
-        })?;
+        let metadata = entry
+            .metadata()
+            .with_context(|| format!("error retrieving metadata for {:?}", path))?;
 
         if metadata.len() < self.min_size {
             return Ok(Checked::TooSmall);
         }
 
         if !self.ignore_extension(path) {
-            let is_candidate =
-                Self::is_candidate_file(&mut self.criteria, path, self.block_size)
-                    .map_err(|e| ProcError::new(&format!("Error reading {:?}", path), e))?;
+            let is_candidate = Self::is_candidate_file(&mut self.criteria, path, self.block_size)
+                .with_context(|| format!("Error reading {:?}", path))?;
 
             Ok(self.update_ignored_count(path, &metadata, is_candidate))
         } else {
@@ -127,14 +126,16 @@ impl FileProcessor {
         criteria: &mut Box<dyn Criteria>,
         path: &Path,
         mut remaining: u64,
-    ) -> std::io::Result<bool> {
-        let handle = File::open(path)?;
+    ) -> Result<bool> {
+        let handle = File::open(path).with_context(|| format!("error opening file {:?}", path))?;
         let mut reader = BufReader::new(handle);
 
         criteria.initialize();
         while remaining > 0 {
             let consumed = {
-                let buffer = reader.fill_buf()?;
+                let buffer = reader
+                    .fill_buf()
+                    .with_context(|| format!("error reading from {:?}", path))?;
                 if buffer.is_empty() {
                     break;
                 }

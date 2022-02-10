@@ -7,7 +7,6 @@ use walkdir::WalkDir;
 
 mod args;
 mod criteria;
-mod error;
 mod processor;
 
 use criteria::{Criteria, DeflatableFiles, TextFiles};
@@ -27,6 +26,18 @@ fn human_readable_size(n_bytes: u64) -> String {
 
 fn machine_readable_size(n_bytes: u64) -> String {
     format!("{}", n_bytes)
+}
+
+fn eprint_error(error: anyhow::Error) {
+    eprint!("ERR: {}", error);
+
+    let mut cause = error.source();
+    while let Some(err) = cause {
+        eprint!(", caused by {}", err);
+        cause = err.source();
+    }
+
+    eprintln!();
 }
 
 fn create_processor(args: &args::Args) -> processor::FileProcessor {
@@ -71,7 +82,7 @@ fn main() {
 
             match processor.process(entry) {
                 Err(error) => {
-                    eprintln!("{}", error);
+                    eprint_error(error);
                     errors += 1;
                 }
                 Ok(Checked::NotFile) => non_files_skipped += 1,
