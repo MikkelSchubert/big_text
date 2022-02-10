@@ -3,11 +3,7 @@ extern crate clap;
 extern crate flate2;
 extern crate walkdir;
 
-use std::io::Write;
 use walkdir::WalkDir;
-
-#[macro_use]
-mod stderr;
 
 mod args;
 mod criteria;
@@ -75,7 +71,7 @@ fn main() {
 
             match processor.process(entry) {
                 Err(error) => {
-                    stderrln!("{}", error);
+                    eprintln!("{}", error);
                     errors += 1;
                 }
                 Ok(Checked::NotFile) => non_files_skipped += 1,
@@ -84,7 +80,7 @@ fn main() {
                 Ok(Checked::IgnoredExt(ext)) => {
                     files_skipped += 1;
                     if !args.quiet_mode {
-                        stderrln!("Now skipping files with extension *.{}", ext);
+                        eprintln!("Now skipping files with extension *.{}", ext);
                     }
                 }
                 Ok(Checked::Candidate(size, path)) => {
@@ -97,12 +93,12 @@ fn main() {
     }
 
     if !args.quiet_mode {
-        stderrln!("Files checked = {}", total_checked);
-        stderrln!(" - Small files skipped = {}", small_files_skipped);
-        stderrln!(" - Non-files skipped = {}", non_files_skipped);
-        stderrln!(" - Ignored files = {}", files_skipped);
-        stderrln!("Candidate files found = {}", candidates_found);
-        stderrln!(" - Total size = {}", format_size(total_size));
-        stderrln!("Errors encountered = {}", errors);
+        eprintln!("Files checked = {}", total_checked);
+        eprintln!(" - Small files skipped = {}", small_files_skipped);
+        eprintln!(" - Non-files skipped = {}", non_files_skipped);
+        eprintln!(" - Ignored files = {}", files_skipped);
+        eprintln!("Candidate files found = {}", candidates_found);
+        eprintln!(" - Total size = {}", format_size(total_size));
+        eprintln!("Errors encountered = {}", errors);
     }
 }

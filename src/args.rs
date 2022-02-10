@@ -1,6 +1,5 @@
 use clap::{App, Arg, ArgMatches};
 use std;
-use std::io::prelude::*;
 
 pub enum CriteriaArg {
     Text,
@@ -24,14 +23,14 @@ pub fn args() -> Args {
         Some("text") => CriteriaArg::Text,
         Some("deflate") => CriteriaArg::Deflate,
         Some(key) => {
-            stderrln!(
+            eprintln!(
                 "ERROR: Unknown value {:?} found for --criteria option.",
                 key
             );
             std::process::exit(1);
         }
         None => {
-            stderrln!("ERROR: No value found for --criteria option.");
+            eprintln!("ERROR: No value found for --criteria option.");
             std::process::exit(1);
         }
     };
@@ -135,17 +134,16 @@ fn parse_size(args: &ArgMatches, key: &str) -> u64 {
     };
 
     if size.is_empty() {
-        stderrln!("ERROR: No numerical value to --min-size.");
+        eprintln!("ERROR: No numerical value to --min-size.");
         std::process::exit(1);
     }
 
     let size = match u64::from_str_radix(size, 10) {
         Ok(value) => value,
         Err(err) => {
-            stderrln!(
+            eprintln!(
                 "ERROR: Invalid numerical passed to --min-size ({:?}): {}",
-                size,
-                err
+                size, err
             );
             std::process::exit(1);
         }
@@ -159,7 +157,7 @@ fn parse_size(args: &ArgMatches, key: &str) -> u64 {
         "t" | "T" => 1024 * 1024 * 1024 * 1024,
         "p" | "P" => 1024 * 1024 * 1024 * 1024 * 1024,
         _ => {
-            stderrln!("Unknown unit passed to --min-size: {:?}", unit);
+            eprintln!("Unknown unit passed to --min-size: {:?}", unit);
             std::process::exit(1);
         }
     };
@@ -167,7 +165,7 @@ fn parse_size(args: &ArgMatches, key: &str) -> u64 {
     if let Some(value) = size.checked_mul(unit) {
         value
     } else {
-        stderrln!("ERROR: Value passed to --min-size in bytes cannot fit in 64 bit.");
+        eprintln!("ERROR: Value passed to --min-size in bytes cannot fit in 64 bit.");
         std::process::exit(1);
     }
 }
