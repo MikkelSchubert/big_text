@@ -101,7 +101,7 @@ fn parse_args() -> ArgMatches {
                 .long("criteria")
                 .takes_value(true)
                 .possible_values(["text", "deflate"])
-                .default_value("text")
+                .default_value("deflate")
                 .help(
                     "The criteria used to detect candidate files; either 'text' \
                         for text files, or 'deflate' for files compressible using the \

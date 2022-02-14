@@ -1,6 +1,6 @@
 Locate big text files and other big files that can be compressed to save disk space.
 
-By default the program looks for big text files, at least 1GB in size. To identify text files, the first N bytes are checked, defaulting to the first 8 kb. Alternatively, the compression ratio obtained using deflate on the first N bytes can be used to identify files that can be compressed for a given gain. By default, the program will report files with a compressed to uncompressed ratio of 0.75 or less.
+By default the program looks for any file that is at least 1GB in size and that can be compressed at least 25%. Alternatively, compressible files can be located by identifying files containing only ASCII text. Both of these checks are accomplished by testing the first 8 Kb of the file. 
 
 Non-text or non-compressible files are automatically classified by their extension. If 10 or more files in a row (for a given extension) fail the text or deflate check, then subsequent files with that extension are ignored.
 
