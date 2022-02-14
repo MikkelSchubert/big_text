@@ -1,4 +1,4 @@
-Locate text files or uncompressed files, to help archving where the original file-structure should be retained as much as possible.
+Locate big text files and other big files that can be compressed to save disk space.
 
 By default the program looks for big text files, at least 1GB in size. To identify text files, the first N bytes are checked, defaulting to the first 8 kb. Alternatively, the compression ratio obtained using deflate on the first N bytes can be used to identify files that can be compressed for a given gain. By default, the program will report files with a compressed to uncompressed ratio of 0.75 or less.
 
@@ -6,7 +6,7 @@ Non-text or non-compressible files are automatically classified by their extensi
 
 ## Example output
 
-    $ big\_text -h
+    $ big_text -h
     1.3 GB    ./path/to/big/file.tsv
     10.1 GB   ./path/to/bigger/file.mpileup
     [...]
@@ -40,7 +40,7 @@ Non-text or non-compressible files are automatically classified by their extensi
                 ignored [default: 10]
             --compression-ratio <compression-ratio>
                 The highest compression ratio allowed when using the 'deflate'
-                criteria; calcuated as new_size / old_size [default: 0.75]
+                criteria; calculated as new_size / old_size [default: 0.75]
             --criteria <criteria>
                 The criteria used to detect candidate files; either 'text' for
                 text files, or 'deflate' for files compressible using the
