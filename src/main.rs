@@ -104,11 +104,11 @@ fn main() -> Result<(), anyhow::Error> {
 
     if !args.quiet_mode {
         eprintln!("Files checked = {}", total_checked);
-        eprintln!(" - Small files skipped = {}", small_files_skipped);
-        eprintln!(" - Non-files skipped = {}", non_files_skipped);
-        eprintln!(" - Ignored files = {}", files_skipped);
+        eprintln!("Small files skipped = {}", small_files_skipped);
+        eprintln!("Non-files skipped = {}", non_files_skipped);
+        eprintln!("Files ignored = {}", files_skipped);
         eprintln!("Candidate files found = {}", candidates_found);
-        eprintln!(" - Total size = {}", format_size(total_size));
+        eprintln!("Size of candidate files = {}", format_size(total_size));
         eprintln!("Errors encountered = {}", errors);
     }
 
