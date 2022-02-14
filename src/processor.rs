@@ -1,4 +1,3 @@
-use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::ffi::OsString;
 use std::fs::{File, Metadata};
@@ -96,19 +95,14 @@ impl FileProcessor {
         is_candidate: bool,
     ) -> Checked {
         if let Some(ext) = path.extension() {
-            match self.ignored_exts.entry(ext.into()) {
-                Entry::Occupied(mut entry) => {
-                    if is_candidate {
-                        entry.remove();
-                    } else {
-                        *entry.get_mut() += 1;
-                        if entry.get() > &self.check_limit {
-                            return Checked::IgnoredExt(ext.to_string_lossy().into());
-                        }
-                    }
-                }
-                Entry::Vacant(entry) => {
-                    entry.insert(1);
+            if is_candidate {
+                self.ignored_exts.remove(ext);
+            } else {
+                let entry = self.ignored_exts.entry(ext.into()).or_insert(0);
+
+                *entry += 1;
+                if *entry > self.check_limit {
+                    return Checked::IgnoredExt(ext.to_string_lossy().into());
                 }
             }
         }
