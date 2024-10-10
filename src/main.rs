@@ -2,6 +2,7 @@ extern crate clap;
 extern crate flate2;
 extern crate walkdir;
 
+use args::CriteriaArg;
 use walkdir::WalkDir;
 
 mod args;
@@ -62,6 +63,7 @@ fn main() -> Result<(), anyhow::Error> {
 
     let mut errors = 0;
     let mut total_size = 0;
+    let mut total_size_cmp = 0;
     let mut total_checked = 0;
     let mut non_files_skipped = 0;
     let mut small_files_skipped = 0;
@@ -93,9 +95,10 @@ fn main() -> Result<(), anyhow::Error> {
                         eprintln!("Now skipping files with extension *.{}", ext);
                     }
                 }
-                Ok(Checked::Candidate(size, path)) => {
+                Ok(Checked::Candidate(size, ratio, path)) => {
                     println!("{}\t{}", format_size(size), path.to_string_lossy());
                     total_size += size;
+                    total_size_cmp += (size as f64 * ratio.unwrap_or_default()) as u64;
                     candidates_found += 1;
                 }
             }
@@ -109,6 +112,12 @@ fn main() -> Result<(), anyhow::Error> {
         eprintln!("Files ignored = {}", files_skipped);
         eprintln!("Candidate files found = {}", candidates_found);
         eprintln!("Size of candidate files = {}", format_size(total_size));
+        if matches!(args.criteria, CriteriaArg::Deflate) {
+            eprintln!(
+                "Est. size saved by compression = {}",
+                format_size(total_size - total_size_cmp)
+            );
+        }
         eprintln!("Errors encountered = {}", errors);
     }
 

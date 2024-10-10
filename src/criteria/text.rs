@@ -28,7 +28,7 @@ impl Criteria for TextFiles {
 
     fn finalize(&mut self) -> Result<Selection> {
         if self.is_text {
-            Ok(Selection::Select)
+            Ok(Selection::Select(None))
         } else {
             Ok(Selection::Ignore)
         }

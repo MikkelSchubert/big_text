@@ -56,8 +56,9 @@ impl Criteria for DeflatableFiles {
 
         let in_total = self.deflate.total_in() as f64;
         let out_total = self.deflate.total_out() as f64;
-        if (out_total / in_total) <= self.ratio {
-            Ok(Selection::Select)
+        let ratio = out_total / in_total;
+        if ratio <= self.ratio {
+            Ok(Selection::Select(Some(ratio)))
         } else {
             Ok(Selection::Ignore)
         }

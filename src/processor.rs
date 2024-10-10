@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::ffi::OsString;
-use std::fs::{File, Metadata};
+use std::fs::File;
+use std::fs::Metadata;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
@@ -14,7 +15,7 @@ use crate::criteria::{Consuming, Criteria, Selection, TextFiles};
 pub enum Checked {
     NotFile,
     TooSmall,
-    Candidate(u64, PathBuf),
+    Candidate(u64, Option<f64>, PathBuf),
     Ignored,
     IgnoredExt(String),
 }
@@ -71,10 +72,10 @@ impl FileProcessor {
         }
 
         if !self.ignore_extension(path) {
-            let is_candidate = Self::is_candidate_file(&mut self.criteria, path, self.block_size)
+            let candidate = Self::is_candidate_file(&mut self.criteria, path, self.block_size)
                 .with_context(|| format!("Error reading {:?}", path))?;
 
-            Ok(self.update_ignored_count(path, &metadata, is_candidate))
+            self.update_ignored_count(path, &metadata, candidate)
         } else {
             Ok(Checked::Ignored)
         }
@@ -92,25 +93,27 @@ impl FileProcessor {
         &mut self,
         path: &Path,
         metadata: &Metadata,
-        is_candidate: bool,
-    ) -> Checked {
+        candidate: Selection,
+    ) -> Result<Checked> {
         if let Some(ext) = path.extension() {
-            if is_candidate {
-                self.ignored_exts.remove(ext);
-            } else {
-                let entry = self.ignored_exts.entry(ext.into()).or_insert(0);
+            match candidate {
+                Selection::Select(_) => {
+                    self.ignored_exts.remove(ext);
+                }
+                Selection::Ignore => {
+                    let entry = self.ignored_exts.entry(ext.into()).or_insert(0);
 
-                *entry += 1;
-                if *entry > self.check_limit {
-                    return Checked::IgnoredExt(ext.to_string_lossy().into());
+                    *entry += 1;
+                    if *entry > self.check_limit {
+                        return Ok(Checked::IgnoredExt(ext.to_string_lossy().into()));
+                    }
                 }
             }
         }
 
-        if is_candidate {
-            Checked::Candidate(metadata.len(), path.into())
-        } else {
-            Checked::Ignored
+        match candidate {
+            Selection::Select(ratio) => Ok(Checked::Candidate(metadata.len(), ratio, path.into())),
+            Selection::Ignore => Ok(Checked::Ignored),
         }
     }
 
@@ -118,7 +121,7 @@ impl FileProcessor {
         criteria: &mut Box<dyn Criteria>,
         path: &Path,
         mut remaining: u64,
-    ) -> Result<bool> {
+    ) -> Result<Selection> {
         let handle = File::open(path).with_context(|| format!("error opening file {:?}", path))?;
         let mut reader = BufReader::new(handle);
 
@@ -144,6 +147,6 @@ impl FileProcessor {
             reader.consume(consumed);
         }
 
-        criteria.finalize().map(|v| v == Selection::Select)
+        criteria.finalize()
     }
 }

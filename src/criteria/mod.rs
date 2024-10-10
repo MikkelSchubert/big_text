@@ -16,8 +16,8 @@ pub enum Consuming {
 
 #[derive(PartialEq)]
 pub enum Selection {
-    /// The file fits the selection criteria for the criteria
-    Select,
+    /// The file was selected. Estimated compression ratio included if available
+    Select(Option<f64>),
     /// The file does not fit the selection criteria for the criteria
     Ignore,
 }
