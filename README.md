@@ -1,6 +1,6 @@
 Locate big text files and other big files that can be compressed to save disk space.
 
-By default the program looks for any file that is at least 1GB in size and that can be compressed at least 25%. Alternatively, compressible files can be located by identifying files containing only ASCII text. Both of these checks are accomplished by testing the first 8 Kb of the file. 
+By default the program looks for any file that is at least 1GB in size and that can be compressed to 75% or less of the original size. Alternatively, compressible files can be located by identifying files containing only ASCII text. Both of these checks are accomplished by testing the first 8 Kb of the file. 
 
 Non-text or non-compressible files are automatically classified by their extension. If 10 or more files in a row (for a given extension) fail the text or deflate check, then subsequent files with that extension are ignored.
 
