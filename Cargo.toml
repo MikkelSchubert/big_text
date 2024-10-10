@@ -6,6 +6,9 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.53"
-clap = "3.0.14"
+clap = { version = "3.0.14", default-features = false, features = [
+    "std",
+    "suggestions",
+] }
 flate2 = "1.0.22"
 walkdir = "2.3.2"
