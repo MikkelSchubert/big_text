@@ -69,8 +69,7 @@ fn parse_args() -> ArgMatches {
             Arg::new("block-size")
                 .long("block-size")
                 .takes_value(true)
-                // 8k is the default buffer size used by BufReader
-                .default_value("8k")
+                .default_value("64k")
                 .help(
                     "Examine first N bytes of each file to detect text or compressible \
                         files. The same size units used by --min-size are allowed",
