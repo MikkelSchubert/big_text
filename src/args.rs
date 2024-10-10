@@ -38,9 +38,9 @@ pub fn args() -> Result<Args> {
 }
 
 fn parse_args() -> ArgMatches {
-    App::new("big_text")
-        .version("0.0.1")
-        .author("Mikkel Schubert")
+    App::new(env!("CARGO_PKG_NAME"))
+        .version(env!("CARGO_PKG_VERSION"))
+        .author(env!("CARGO_PKG_AUTHORS"))
         .arg(
             Arg::new("quiet")
                 .short('q')
